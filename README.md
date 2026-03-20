@@ -39,6 +39,14 @@ Add your first upstream secret:
 wrangler secret put OPENAI_API_KEY
 ```
 
+Create the required KV namespace for rate limiting and allowlisting:
+
+```bash
+wrangler kv:namespace create GATEWAY_KV
+```
+
+Take the `id` from the output and paste it into your `wrangler.toml`.
+
 Deploy:
 
 ```bash
@@ -142,7 +150,7 @@ bucket_name = "gateflare-logs"
 
 [gateway.r2_backup]
 enabled = true
-bucket  = "GATEWAY_LOGS"
+bucket  = "GATEWAY_LOGS"  # Must match the [[r2_buckets]] binding above
 prefix  = "logs/"
 ```
 
@@ -190,6 +198,7 @@ Each request goes through a fixed pipeline:
 
 ```
 incoming request
+  → handle CORS preflight  (if enabled)
   → match route
   → IP allowlist check     (if enabled)
   → rate limit check       (per-route → global fallback)
@@ -199,6 +208,7 @@ incoming request
   → inject extra headers
   → forward to upstream
   → sanitize response headers
+  → inject CORS headers    (if enabled)
   → log
   → return to client
 ```
