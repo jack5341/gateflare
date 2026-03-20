@@ -52,6 +52,10 @@ export default {
     }
 
     if (config.ip_allowlist?.enabled) {
+      if (!env.GATEWAY_KV) {
+        logger.error("GATEWAY_KV binding is missing but ip_allowlist is enabled");
+        return new Response("Internal Server Error: Missing KV binding", { status: 500 });
+      }
       const allowed = await checkAllowlist(ip, config.ip_allowlist, env.GATEWAY_KV);
       if (!allowed) {
         const entry = logger.warn("ip blocked", { ip });
@@ -62,6 +66,10 @@ export default {
 
     const activeRateLimit = route.rate_limit ?? config.rate_limit;
     if (activeRateLimit?.enabled) {
+      if (!env.GATEWAY_KV) {
+        logger.error("GATEWAY_KV binding is missing but rate_limit is enabled");
+        return new Response("Internal Server Error: Missing KV binding", { status: 500 });
+      }
       const rlKey = buildRateLimitKey(activeRateLimit, route.path, ip);
       const rl = await checkRateLimit(rlKey, activeRateLimit, env.GATEWAY_KV);
       if (!rl.allowed) {
@@ -126,9 +134,13 @@ export default {
       ip,
     });
 
-    if (config.r2_backup?.enabled && env.GATEWAY_LOGS) {
-      appendToBuffer(entry);
-      await flushToR2(env.GATEWAY_LOGS, config.r2_backup.prefix ?? "logs/");
+    if (config.r2_backup?.enabled) {
+      if (env.GATEWAY_LOGS) {
+        appendToBuffer(entry);
+        await flushToR2(env.GATEWAY_LOGS, config.r2_backup.prefix ?? "logs/");
+      } else {
+        logger.warn("GATEWAY_LOGS binding is missing but r2_backup is enabled");
+      }
     }
 
     return response;
