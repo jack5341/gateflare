@@ -1,13 +1,72 @@
-import { DateTime, Str } from "chanfana";
-import type { Context } from "hono";
-import { z } from "zod";
+export type LogLevel = "debug" | "info" | "warn" | "error";
 
-export type AppContext = Context<{ Bindings: Env }>;
+export interface RateLimitConfig {
+  enabled: boolean;
+  requests: number;
+  window_seconds: number;
+  by: "ip" | "global";
+}
 
-export const Task = z.object({
-	name: Str({ example: "lorem" }),
-	slug: Str(),
-	description: Str({ required: false }),
-	completed: z.boolean().default(false),
-	due_date: DateTime(),
-});
+export interface RewriteConfig {
+  strip_prefix?: string;
+  add_prefix?: string;
+}
+
+export interface HeadersConfig {
+  strip?: string[];
+  inject?: Record<string, string>;
+}
+
+export interface RouteConfig {
+  path: string;
+  upstream: string;
+  secret_ref?: string;
+  auth_style?: "bearer" | "header";
+  auth_header?: string;
+  rate_limit?: RateLimitConfig;
+  rewrite?: RewriteConfig;
+  headers?: HeadersConfig;
+}
+
+export interface AllowlistConfig {
+  enabled: boolean;
+  allow?: string[];
+}
+
+export interface R2BackupConfig {
+  enabled: boolean;
+  bucket?: string;
+  prefix?: string;
+}
+
+export interface GatewayConfig {
+  log_level: LogLevel;
+  environment?: string;
+  rate_limit?: RateLimitConfig;
+  ip_allowlist?: AllowlistConfig;
+  r2_backup?: R2BackupConfig;
+  routes: RouteConfig[];
+}
+
+export interface Env {
+  GATEWAY_KV: KVNamespace;
+  GATEWAY_LOGS: R2Bucket;
+  GATEWAY_CONFIG: string;
+  [key: string]: unknown;
+}
+
+export interface LogEntry {
+  level: LogLevel;
+  timestamp: string;
+  request_id: string;
+  route: string | null;
+  message: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface RequestContext {
+  request_id: string;
+  ip: string;
+  route: RouteConfig | null;
+  started_at: number;
+}

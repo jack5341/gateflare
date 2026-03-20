@@ -1,0 +1,33 @@
+name               = "gateflare"
+main               = "src/index.ts"
+compatibility_date = "2026-03-20"
+
+[[kv_namespaces]]
+binding = "GATEWAY_KV"
+id      = "your-kv-namespace-id"
+
+[vars]
+GATEWAY_CONFIG = """
+{
+  "log_level": "info",
+  "rate_limit": {
+    "enabled": true,
+    "requests": 60,
+    "window_seconds": 60,
+    "by": "ip"
+  },
+  "routes": [
+    {
+      "path": "/openai/*",
+      "upstream": "https://api.openai.com",
+      "secret_ref": "OPENAI_API_KEY",
+      "auth_style": "bearer",
+      "rewrite": { "strip_prefix": "/openai" },
+      "headers": {
+        "strip": ["origin", "referer", "cf-connecting-ip"],
+        "inject": { "openai-beta": "assistants=v2" }
+      }
+    }
+  ]
+}
+"""

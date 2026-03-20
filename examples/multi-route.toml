@@ -1,0 +1,49 @@
+name               = "gateflare-multi"
+main               = "src/index.ts"
+compatibility_date = "2026-03-20"
+
+[[kv_namespaces]]
+binding = "GATEWAY_KV"
+id      = "your-kv-namespace-id"
+
+[[r2_buckets]]
+binding     = "GATEWAY_LOGS"
+bucket_name = "gateflare-logs"
+
+[vars]
+GATEWAY_CONFIG = """
+{
+  "log_level": "debug",
+  "environment": "staging",
+  "rate_limit": {
+    "enabled": true,
+    "requests": 1000,
+    "window_seconds": 3600,
+    "by": "ip"
+  },
+  "ip_allowlist": {
+    "enabled": true,
+    "allow": ["1.2.3.4", "5.6.7.0/24"]
+  },
+  "r2_backup": {
+    "enabled": true,
+    "bucket": "GATEWAY_LOGS",
+    "prefix": "staging/logs/"
+  },
+  "routes": [
+    {
+      "path": "/api/*",
+      "upstream": "https://api.example.com",
+      "rewrite": { "strip_prefix": "/api", "add_prefix": "/v1" },
+      "rate_limit": { "enabled": true, "requests": 100, "window_seconds": 60, "by": "ip" }
+    },
+    {
+      "path": "/static/*",
+      "upstream": "https://static.example.com",
+      "headers": {
+        "inject": { "cache-control": "public, max-age=3600" }
+      }
+    }
+  ]
+}
+"""

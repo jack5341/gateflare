@@ -1,0 +1,23 @@
+name               = "stripe-gateway"
+main               = "src/index.ts"
+compatibility_date = "2026-03-20"
+
+[vars]
+GATEWAY_CONFIG = """
+{
+  "log_level": "info",
+  "routes": [
+    {
+      "path": "/stripe/*",
+      "upstream": "https://api.stripe.com",
+      "secret_ref": "STRIPE_SECRET_KEY",
+      "auth_style": "bearer",
+      "rewrite": { "strip_prefix": "/stripe" },
+      "headers": {
+        "strip": ["origin", "referer", "cookie"],
+        "inject": { "stripe-version": "2024-06-20" }
+      }
+    }
+  ]
+}
+"""

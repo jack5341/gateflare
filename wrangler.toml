@@ -1,0 +1,103 @@
+name               = "gateflare"
+main               = "src/index.ts"
+compatibility_date = "2026-03-20"
+
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "GATEWAY_KV"
+id      = "your-kv-namespace-id"
+
+[[r2_buckets]]
+binding     = "GATEWAY_LOGS"
+bucket_name = "gateflare-logs"
+
+[vars]
+GATEWAY_CONFIG = """
+{
+  "log_level": "info",
+  "environment": "production",
+  "rate_limit": {
+    "enabled": false,
+    "requests": 100,
+    "window_seconds": 60,
+    "by": "ip"
+  },
+  "ip_allowlist": {
+    "enabled": false,
+    "allow": [
+      "203.0.113.42",
+      "198.51.100.0/24",
+      "10.0.0.0/8"
+    ]
+  },
+  "r2_backup": {
+    "enabled": false,
+    "bucket": "GATEWAY_LOGS",
+    "prefix": "logs/"
+  },
+  "routes": [
+    {
+      "path": "/openai/*",
+      "upstream": "https://api.openai.com",
+      "secret_ref": "OPENAI_API_KEY",
+      "auth_style": "bearer",
+      "rewrite": { "strip_prefix": "/openai" },
+      "rate_limit": { "enabled": true, "requests": 50, "window_seconds": 60, "by": "ip" },
+      "headers": {
+        "strip": ["x-forwarded-for", "cf-connecting-ip", "origin"],
+        "inject": { "x-gateflare-source": "gateflare", "openai-beta": "assistants=v2" }
+      }
+    },
+    {
+      "path": "/stripe/*",
+      "upstream": "https://api.stripe.com",
+      "secret_ref": "STRIPE_SECRET_KEY",
+      "auth_style": "bearer",
+      "rewrite": { "strip_prefix": "/stripe" },
+      "rate_limit": { "enabled": true, "requests": 200, "window_seconds": 60, "by": "ip" },
+      "headers": {
+        "strip": ["origin", "referer", "cookie"],
+        "inject": { "stripe-version": "2024-06-20" }
+      }
+    },
+    {
+      "path": "/anthropic/*",
+      "upstream": "https://api.anthropic.com",
+      "secret_ref": "ANTHROPIC_API_KEY",
+      "auth_style": "header",
+      "auth_header": "x-api-key",
+      "rewrite": { "strip_prefix": "/anthropic" },
+      "rate_limit": { "enabled": true, "requests": 30, "window_seconds": 60, "by": "ip" },
+      "headers": {
+        "strip": ["origin"],
+        "inject": { "anthropic-version": "2023-06-01" }
+      }
+    },
+    {
+      "path": "/github/*",
+      "upstream": "https://api.github.com",
+      "secret_ref": "GITHUB_TOKEN",
+      "auth_style": "bearer",
+      "rewrite": { "strip_prefix": "/github" },
+      "headers": {
+        "strip": ["origin", "referer"],
+        "inject": { "user-agent": "gateflare/1.0", "accept": "application/vnd.github+json" }
+      }
+    },
+    {
+      "path": "/internal/*",
+      "upstream": "https://internal.yourcompany.com",
+      "secret_ref": "INTERNAL_API_KEY",
+      "auth_style": "header",
+      "auth_header": "x-internal-token",
+      "rewrite": { "strip_prefix": "/internal", "add_prefix": "/api/v2" },
+      "rate_limit": { "enabled": true, "requests": 1000, "window_seconds": 60, "by": "global" },
+      "headers": {
+        "strip": ["x-forwarded-for"],
+        "inject": { "x-source": "gateflare", "x-env": "production" }
+      }
+    }
+  ]
+}
+"""
