@@ -2,10 +2,6 @@ name               = "gateflare"
 main               = "src/index.ts"
 compatibility_date = "2026-03-20"
 
-[[kv_namespaces]]
-binding = "GATEWAY_KV"
-id      = "your-kv-namespace-id"
-
 [vars]
 GATEWAY_CONFIG = """
 {
@@ -15,6 +11,10 @@ GATEWAY_CONFIG = """
     "requests": 60,
     "window_seconds": 60,
     "by": "ip"
+  },
+  "cors": {
+    "enabled": true,
+    "origin": "*"
   },
   "routes": [
     {

@@ -26,6 +26,7 @@ export interface RouteConfig {
   rate_limit?: RateLimitConfig;
   rewrite?: RewriteConfig;
   headers?: HeadersConfig;
+  cors?: CorsConfig;
 }
 
 export interface AllowlistConfig {
@@ -39,12 +40,22 @@ export interface R2BackupConfig {
   prefix?: string;
 }
 
+export interface CorsConfig {
+  enabled: boolean;
+  origin?: string | string[];
+  methods?: string | string[];
+  headers?: string | string[];
+  max_age?: number;
+  credentials?: boolean;
+}
+
 export interface GatewayConfig {
   log_level: LogLevel;
   environment?: string;
   rate_limit?: RateLimitConfig;
   ip_allowlist?: AllowlistConfig;
   r2_backup?: R2BackupConfig;
+  cors?: CorsConfig;
   routes: RouteConfig[];
 }
 

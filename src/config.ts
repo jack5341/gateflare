@@ -19,6 +19,15 @@ const HeadersSchema = z.object({
   inject: z.record(z.string({ invalid_type_error: "headers.inject values must be strings" })).optional(),
 });
 
+const CorsSchema = z.object({
+  enabled: z.boolean({ invalid_type_error: "cors.enabled must be a boolean" }).default(false),
+  origin: z.union([z.string(), z.array(z.string())], { invalid_type_error: "cors.origin must be a string or string array" }).default("*"),
+  methods: z.union([z.string(), z.array(z.string())], { invalid_type_error: "cors.methods must be a string or string array" }).default(["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]),
+  headers: z.union([z.string(), z.array(z.string())], { invalid_type_error: "cors.headers must be a string or string array" }).default("*"),
+  max_age: z.number({ invalid_type_error: "cors.max_age must be a number" }).int().positive().default(86400),
+  credentials: z.boolean({ invalid_type_error: "cors.credentials must be a boolean" }).default(false),
+});
+
 const RouteSchema = z.object({
   path: z.string({ required_error: "route.path is required", invalid_type_error: "route.path must be a string" }),
   upstream: z.string({ required_error: "route.upstream is required" }).url("route.upstream must be a valid URL"),
@@ -28,6 +37,7 @@ const RouteSchema = z.object({
   rate_limit: RateLimitSchema.optional(),
   rewrite: RewriteSchema.optional(),
   headers: HeadersSchema.optional(),
+  cors: CorsSchema.optional(),
 });
 
 const AllowlistSchema = z.object({
@@ -47,6 +57,7 @@ const GatewayConfigSchema = z.object({
   rate_limit: RateLimitSchema.optional(),
   ip_allowlist: AllowlistSchema.optional(),
   r2_backup: R2BackupSchema.optional(),
+  cors: CorsSchema.optional(),
   routes: z.array(RouteSchema, { invalid_type_error: "routes must be an array" }).default([]),
 });
 

@@ -101,9 +101,17 @@ Routes match top to bottom, first match wins. Each route needs at minimum a `pat
 |---|---|---|
 | `path` | yes | glob pattern e.g. `/openai/*` |
 | `upstream` | yes | full URL of the upstream API |
+| `cors` | no | CORS settings for the route |
 | `secret_ref` | yes | name of the Worker secret to inject |
 | `auth_style` | no | `bearer` (default) or `header` |
 | `auth_header` | no | custom header name when `auth_style = "header"` |
+
+Each route can also have these optional sub-tables:
+
+- `rewrite`: Path rewriting rules.
+- `rate_limit`: Per-route rate limit override.
+- `cors`: Per-route CORS override.
+- `headers`: Header manipulation (strip/inject).
 
 ### Per-route rate limits
 

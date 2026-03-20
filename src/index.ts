@@ -7,6 +7,7 @@ import { injectAuth } from "./inject";
 import { rewritePath } from "./rewrite";
 import { sanitizeResponse } from "./sanitize";
 import { appendToBuffer, flushToR2 } from "./r2backup";
+import { handleCorsPreflight, applyCorsHeaders } from "./cors";
 import type { Env, RequestContext } from "./types";
 
 export default {
@@ -35,6 +36,14 @@ export default {
       requestId,
       route?.path ?? null
     );
+
+    const activeCors = route?.cors ?? config.cors;
+    if (activeCors?.enabled) {
+      const preflight = handleCorsPreflight(request, activeCors);
+      if (preflight) {
+        return preflight;
+      }
+    }
 
     if (!route) {
       const entry = logger.warn("no route matched", { path: url.pathname });
@@ -104,6 +113,10 @@ export default {
       upstreamResponse,
       route.headers?.strip ?? []
     );
+
+    if (activeCors?.enabled) {
+      applyCorsHeaders(response.headers, activeCors);
+    }
 
     const duration = Date.now() - startedAt;
     const entry = logger.info("request forwarded", {
