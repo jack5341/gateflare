@@ -2,7 +2,7 @@
 
 A Cloudflare Workers API gateway you configure with a TOML file and deploy in five minutes.
 
-No servers. No dashboards. No pricing tiers. Just a `wrangler.toml` and `wrangler deploy`.
+Just a `wrangler.toml` and `wrangler deploy`.
 
 ---
 
